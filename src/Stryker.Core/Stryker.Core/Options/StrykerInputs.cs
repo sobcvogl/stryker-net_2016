@@ -44,6 +44,7 @@ namespace Stryker.Core.Options
         ThresholdLowInput ThresholdLowInput { get; init; }
         VerbosityInput VerbosityInput { get; init; }
         WithBaselineInput WithBaselineInput { get; init; }
+        MutantToDiagnoseInput MutantToDiagnose { get; set; }
 
         StrykerOptions ValidateAll();
     }
@@ -77,6 +78,7 @@ namespace Stryker.Core.Options
         public TestProjectsInput TestProjectsInput { get; init; } = new();
         public TestCaseFilterInput TestCaseFilterInput { get; init; } = new();
         public WithBaselineInput WithBaselineInput { get; init; } = new();
+        public MutantToDiagnoseInput MutantToDiagnose { get; set; } = new();
         public ReportersInput ReportersInput { get; init; } = new();
         public BaselineProviderInput BaselineProviderInput { get; init; } = new();
         public AzureFileStorageUrlInput AzureFileStorageUrlInput { get; init; } = new();
