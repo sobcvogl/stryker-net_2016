@@ -44,7 +44,9 @@ namespace Stryker.Core.Options
         ThresholdLowInput ThresholdLowInput { get; init; }
         VerbosityInput VerbosityInput { get; init; }
         WithBaselineInput WithBaselineInput { get; init; }
+        OpenReportInput OpenReportInput { get; init; }
         MutantToDiagnoseInput MutantToDiagnose { get; set; }
+        OpenReportEnabledInput OpenReportEnabledInput { get; init; }
 
         StrykerOptions ValidateAll();
     }
@@ -99,15 +101,20 @@ namespace Stryker.Core.Options
         public DisableBailInput DisableBailInput { get; set; } = new();
         public DisableMixMutantsInput DisableMixMutantsInput { get; set; } = new();
         public MsBuildPathInput MsBuildPathInput { get; init; } = new();
+        public OpenReportInput OpenReportInput { get; init; } = new();
+        public OpenReportEnabledInput OpenReportEnabledInput { get; init; } = new();
 
         public StrykerOptions ValidateAll()
         {
             var basePath = BasePathInput.Validate(_fileSystem);
             var outputPath = OutputPathInput.Validate(_fileSystem);
             var reportFileNameInput = ReportFileNameInput.Validate();
-            var reporters = ReportersInput.Validate();
+            var withBaseline = WithBaselineInput.Validate();
+            var reporters = ReportersInput.Validate(withBaseline);
             var baselineProvider = BaselineProviderInput.Validate(reporters);
             var sinceEnabled = SinceInput.Validate(WithBaselineInput.SuppliedInput);
+            var sinceTarget = SinceTargetInput.Validate(sinceEnabled);
+            var projectVersion = ProjectVersionInput.Validate(reporters, withBaseline);
 
             _strykerOptionsCache ??= new StrykerOptions()
             {
@@ -143,18 +150,19 @@ namespace Stryker.Core.Options
                 TestProjects = TestProjectsInput.Validate(),
                 TestCaseFilter = TestCaseFilterInput.Validate(),
                 DashboardUrl = DashboardUrlInput.Validate(),
-                DashboardApiKey = DashboardApiKeyInput.Validate(WithBaselineInput.SuppliedInput, baselineProvider, reporters),
+                DashboardApiKey = DashboardApiKeyInput.Validate(withBaseline, baselineProvider, reporters),
                 ProjectName = ProjectNameInput.Validate(),
                 ModuleName = ModuleNameInput.Validate(),
-                ProjectVersion = ProjectVersionInput.Validate(FallbackVersionInput.SuppliedInput, reporters, WithBaselineInput.SuppliedInput),
+                ProjectVersion = ProjectVersionInput.Validate(reporters, withBaseline),
                 DiffIgnoreChanges = DiffIgnoreChangesInput.Validate(),
                 AzureFileStorageSas = AzureFileStorageSasInput.Validate(baselineProvider),
                 AzureFileStorageUrl = AzureFileStorageUrlInput.Validate(baselineProvider),
-                WithBaseline = WithBaselineInput.Validate(),
+                WithBaseline = withBaseline,
                 BaselineProvider = baselineProvider,
-                FallbackVersion = FallbackVersionInput.Validate(ProjectVersionInput.SuppliedInput, WithBaselineInput.SuppliedInput),
+                FallbackVersion = FallbackVersionInput.Validate(withBaseline, projectVersion, sinceTarget),
                 Since = sinceEnabled,
-                SinceTarget = SinceTargetInput.Validate(sinceEnabled)
+                SinceTarget = sinceTarget,
+                ReportTypeToOpen = OpenReportInput.Validate(OpenReportEnabledInput.Validate())
             };
             return _strykerOptionsCache;
         }

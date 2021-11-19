@@ -5,7 +5,7 @@ using Shouldly;
 using Stryker.Core.Baseline.Providers;
 using Stryker.Core.Options;
 using Stryker.Core.Reporters;
-using Stryker.Core.Reporters.Html;
+using Stryker.Core.Reporters.Html.reporter;
 using Stryker.Core.Reporters.Json;
 using Stryker.Core.Reporters.Progress;
 using Xunit;
@@ -35,7 +35,6 @@ namespace Stryker.Core.UnitTest.Reporters
         [Fact]
         public void ReporterFactory_CreatesAllReporters()
         {
-
             var target = new ReporterFactory();
             var options = new StrykerOptions { Reporters = new[] { Reporter.All } };
 
@@ -48,7 +47,7 @@ namespace Stryker.Core.UnitTest.Reporters
             broadcastReporter.Reporters.ShouldContain(r => r is ClearTextTreeReporter);
             broadcastReporter.Reporters.ShouldContain(r => r is ProgressReporter);
             broadcastReporter.Reporters.ShouldContain(r => r is DashboardReporter);
-            broadcastReporter.Reporters.ShouldContain(r => r is GitBaselineReporter);
+            broadcastReporter.Reporters.ShouldContain(r => r is BaselineReporter);
 
             result.Reporters.Count().ShouldBe(8);
         }
