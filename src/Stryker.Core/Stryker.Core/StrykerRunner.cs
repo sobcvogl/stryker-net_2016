@@ -91,6 +91,7 @@ namespace Stryker.Core
                         _logger.LogWarning("It\'s a mutant-free world, nothing to test.");
                     }
 
+                    reporters.OnStartMutantTestRun(mutantsNotRun);
                     reporters.OnAllMutantsTested(readOnlyInputComponent);
                     return new StrykerRunResult(options, double.NaN);
                 }

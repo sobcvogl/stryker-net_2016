@@ -132,6 +132,8 @@ namespace Stryker.Core.Mutants
                 Mutation = mutation,
                 ResultStatus = mutantIgnored ? MutantStatus.Ignored : MutantStatus.NotRun,
                 IsStaticValue = context.InStaticValue,
+                CannotDetermineCoverage = context.CantDetermineCoverage,
+                MustBeTestedInIsolation = context.MustTestInIsolation,
                 ResultStatusReason = mutantIgnored ? context.FilterComment : "not run"
             };
         }
