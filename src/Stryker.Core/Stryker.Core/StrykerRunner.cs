@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using Microsoft.Extensions.Logging;
 using Stryker.Core.Exceptions;
+using Stryker.Core.Helpers;
 using Stryker.Core.Initialisation;
 using Stryker.Core.Logging;
 using Stryker.Core.Mutants;
@@ -15,7 +17,8 @@ namespace Stryker.Core
 {
     public interface IStrykerRunner
     {
-        StrykerRunResult RunMutationTest(IStrykerInputs inputs, ILoggerFactory loggerFactory, IProjectOrchestrator projectOrchestrator = null);
+        void SetupLogging(ILoggerFactory loggerFactory);
+        StrykerRunResult RunMutationTest(IStrykerInputs inputs, IProjectOrchestrator projectOrchestrator = null);
     }
 
     public class StrykerRunner : IStrykerRunner
@@ -34,15 +37,13 @@ namespace Stryker.Core
         /// <summary>
         /// Starts a mutation test run
         /// </summary>
-        /// <param name="options">The user options</param>
-        /// <param name="loggerFactory">This loggerfactory will be used to create loggers during the stryker run</param>
+        /// <param name="inputs"></param>
+        /// <param name="projectOrchestrator"></param>
         /// <exception cref="InputException">For managed exceptions</exception>
-        public StrykerRunResult RunMutationTest(IStrykerInputs inputs, ILoggerFactory loggerFactory, IProjectOrchestrator projectOrchestrator = null)
+        public StrykerRunResult RunMutationTest(IStrykerInputs inputs, IProjectOrchestrator projectOrchestrator = null)
         {
             var stopwatch = new Stopwatch();
             stopwatch.Start();
-
-            SetupLogging(loggerFactory);
 
             // Setup project orchestrator can't be done sooner since it needs logging
             projectOrchestrator ??= new ProjectOrchestrator();
@@ -50,7 +51,7 @@ namespace Stryker.Core
             var options = inputs.ValidateAll();
             _logger.LogDebug("Stryker started with options: {@Options}", options);
 
-            var reporters = _reporterFactory.Create(options);
+            var reporters = inputs.MutantToDiagnose.SuppliedInput.HasValue ? new BroadcastReporter(Enumerable.Empty<IReporter>()) : _reporterFactory.Create(options);
 
             try
             {
@@ -94,21 +95,19 @@ namespace Stryker.Core
                         _logger.LogWarning("It\'s a mutant-free world, nothing to test.");
                     }
 
-                    reporters.OnAllMutantsTested(rootComponent);
+                    reporters.OnStartMutantTestRun(mutantsNotRun);
                     return new StrykerRunResult(options, rootComponent.GetMutationScore());
                 }
 
-                // Report
-                reporters.OnStartMutantTestRun(mutantsNotRun);
-
-                // Test
-                foreach (var project in _mutationTestProcesses)
+                if (!inputs.MutantToDiagnose.SuppliedInput.HasValue)
                 {
-                    project.Test(project.Input.ProjectInfo.ProjectContents.Mutants.Where(x => x.ResultStatus == MutantStatus.NotRun).ToList());
-                    project.Restore();
+                    // normal test run
+                    TestMutants(reporters, mutantsNotRun, readOnlyInputComponent);
                 }
-
-                reporters.OnAllMutantsTested(rootComponent);
+                else
+                {
+                    DiagnoseMutant(inputs, mutantsNotRun);
+                }
 
                 return new StrykerRunResult(options, rootComponent.GetMutationScore());
             }
@@ -129,7 +128,97 @@ namespace Stryker.Core
             }
         }
 
-        private void SetupLogging(ILoggerFactory loggerFactory)
+        private void DiagnoseMutant(IStrykerInputs inputs, IList<Mutant> mutantsNotRun)
+        {
+            var mutant = inputs.MutantToDiagnose.SuppliedInput!.Value;
+
+            var monitoredProject = _mutationTestProcesses.FirstOrDefault(p =>
+                p.Input.ProjectInfo.ProjectContents.Mutants.Any(m => m.Id == mutant));
+            _logger.LogWarning("*** Mutant Diagnostic mode enabled ***");
+            if (monitoredProject == null)
+            {
+                // we were given an invalid mutant ID
+                _logger.LogError($"Unable to find mutant {mutant}. Please provide an existing mutant id.");
+                return;
+            }
+
+            var results = monitoredProject.DiagnoseMutant(mutantsNotRun, inputs.MutantToDiagnose.SuppliedInput.Value);
+            _logger.LogInformation(GenerateDiagnoseReport(results));
+            _logger.LogWarning("*** Mutant Diagnostic mode end ***");
+        }
+
+        public string GenerateDiagnoseReport(MutantDiagnostic results)
+        {
+            var report = new StringBuilder();
+            var baseLine = results.RunResults[0].status;
+            // diagnostic run
+            if (baseLine == results.RunResults[1].status && baseLine == results.RunResults[2].status)
+            {  
+                report.AppendFormat("Mutant consistently appears as {0}. {1}.",
+                    baseLine, baseLine switch
+                    {
+                        MutantStatus.NoCoverage or MutantStatus.Survived=> "You need to add some tests to fix that",
+                        _ => "There is no visible issue"
+                    });
+            }
+            else
+            {
+                report.AppendLine("Run results are not consistent!");
+                if (baseLine == MutantStatus.Survived)
+                {
+                    // false positive
+                    if (results.RunResults[1].status == baseLine)
+                    {
+                        _logger.LogInformation("Coverage analysis dit not properly capture coverage for this mutant.");
+                        report.AppendLine("The coverage for this mutant was not properly determined. You can workaround this problem.");
+                        var findDeclaringNodeText = results.DiagnosedMutant.Location;
+                        report.AppendFormat("Add '// Stryker full once' to {0}.", findDeclaringNodeText);
+                        report.AppendLine();
+                        report.Append("It was killed by these test(s): ");
+                        report.AppendJoin(',', results.RunResults[2].killingTests.Except(results.CoveringTests));
+                    }
+                    else
+                    {
+                        _logger.LogInformation("There have been an unexpected interaction between two mutations.");
+                        report.AppendLine("The tests for this mutant was corrupted by another mutant. As a work around, you should");
+                        var findDeclaringNodeText = results.ConflictingMutant.Location;
+                        report.AppendFormat("Add '// Stryker apart once' before mutant {0} at {1}.",
+                            results.ConflictingMutant.Id, results.ConflictingMutant.Location);
+                        report.AppendLine();
+                        report.AppendFormat("Diagnosed mutant {0} was killed by these test(s): ", results.DiagnosedMutant.Id);
+                        report.AppendLine();
+                        report.AppendJoin(',', results.RunResults[2].killingTests);
+                    }
+                }
+                else if (results.RunResults[0].status == MutantStatus.NoCoverage)
+                {
+                    //TODO handle situation where a mutant is killed while not having coverage
+                }
+                else
+                {
+                    _logger.LogWarning("Stryker.NET is not able to produce a diagnostic for false negative.");
+                }
+            }
+
+            return report.ToString();
+        }
+        private void TestMutants(IReporter reporters, IEnumerable<Mutant> mutantsNotRun, IReadOnlyProjectComponent readOnlyInputComponent)
+        {
+            // Report
+            reporters.OnStartMutantTestRun(mutantsNotRun);
+
+            // Test
+            foreach (var project in _mutationTestProcesses)
+            {
+                project.Test(project.Input.ProjectInfo.ProjectContents.Mutants.Where(x => x.ResultStatus == MutantStatus.NotRun)
+                    .ToList());
+                project.Restore();
+            }
+
+            reporters.OnAllMutantsTested(readOnlyInputComponent);
+        }
+
+        public void SetupLogging(ILoggerFactory loggerFactory)
         {
             // setup logging
             ApplicationLogging.LoggerFactory = loggerFactory;
