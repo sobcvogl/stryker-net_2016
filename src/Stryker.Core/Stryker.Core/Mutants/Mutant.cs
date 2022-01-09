@@ -14,6 +14,8 @@ namespace Stryker.Core.Mutants
         bool CountForStats { get; }
         bool MustRunAgainstAllTests { get; }
         bool IsStaticValue { get; }
+        public bool MustBeTestedInIsolation { get; }
+        public string Location { get; }
     }
 
     /// <summary>
@@ -29,7 +31,7 @@ namespace Stryker.Core.Mutants
         public string ResultStatusReason { get; set; }
         public bool CountForStats => ResultStatus != MutantStatus.CompileError && ResultStatus != MutantStatus.Ignored;
         public bool MustRunAgainstAllTests => CoveringTests.IsEveryTest;
-        public bool MustRunAgainstAllTests => CoveringTests.IsEveryTest;
+        public string DisplayName => $"{Id}: {Mutation?.DisplayName}";
         public string Location
         {
             get

@@ -46,7 +46,6 @@ namespace Stryker.Core.Initialisation.Buildalyzer
             analyzerResult.GetPropertyOrDefault("GeneratedAssemblyInfoFile",
                 (Path.GetFileNameWithoutExtension(analyzerResult.ProjectFilePath) + ".AssemblyInfo.cs")
                 .ToLowerInvariant());
-        }
 
         public static string GetSymbolFileName(this IAnalyzerResult analyzerResult) =>
             Path.ChangeExtension(analyzerResult.GetAssemblyName(), ".pdb");
