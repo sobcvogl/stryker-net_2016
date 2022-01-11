@@ -54,11 +54,11 @@
       },
       "System.IO.Abstractions.TestingHelpers": {
         "type": "Direct",
-        "requested": "[16.0.3, )",
-        "resolved": "16.0.3",
-        "contentHash": "1IAvXGWBkQLWJJ9KZOFTuoAWrl9ttLTi/3faXbpQv/2P/qMgZz4M+ZkwWDrNPjjeEmwp85acSYR2cURkzsiO5Q==",
+        "requested": "[16.0.8, )",
+        "resolved": "16.0.8",
+        "contentHash": "blDn7UqAQtHfDKFc56rHAPJBq4RNSa218YG/2gXMTFOP9ATcWwMxcQjdOaFherQOUhYNQONSgpFK4pO//EIeKQ==",
         "dependencies": {
-          "System.IO.Abstractions": "16.0.3"
+          "System.IO.Abstractions": "16.0.8"
         }
       },
       "xunit": {
@@ -525,8 +525,8 @@
       },
       "Microsoft.Web.LibraryManager.Build": {
         "type": "Transitive",
-        "resolved": "2.1.113",
-        "contentHash": "sPbpMMMqcdvVL8dyugOY5o4APB2bY1I9ueBlrDTfMRMRHP+olcDoqCGnaCSluxoCnzRpz9H7TbT7G/mdWwKplw==",
+        "resolved": "2.1.161",
+        "contentHash": "NXhxbf6CY3rfBKTrio23JdBJXMzLb9uiLhPJfXXB7gxTk+Jc6k9IXyno5YJNbeLGBWHbf7C2QVBCIxMMVjBF7A==",
         "dependencies": {
           "System.Runtime.Loader": "4.3.0"
         }
@@ -1187,8 +1187,8 @@
       },
       "System.IO.Abstractions": {
         "type": "Transitive",
-        "resolved": "16.0.3",
-        "contentHash": "0cKY3pTxeyc+yZcHSuqp7G3/An948BnHosBJ+EVr2xX0CK0Y1PwBQ5NHQJx0UhfMTCOjWezvIb9/dNn5zaaLug==",
+        "resolved": "16.0.8",
+        "contentHash": "nqLXOYvgyzKnDxE9ui4F1zhHO2egmMRVGBJFtNvERjfLqyPZ4JQM6cx8kBT7dLR/g0ls7nH+sMRy6hCEzymQHQ==",
         "dependencies": {
           "System.IO.FileSystem.AccessControl": "5.0.0"
         }
@@ -1847,16 +1847,16 @@
           "Microsoft.TestPlatform.ObjectModel": "16.10.0",
           "Microsoft.TestPlatform.Portable": "16.10.0",
           "Microsoft.TestPlatform.TranslationLayer": "16.10.0",
-          "Microsoft.Web.LibraryManager.Build": "2.1.113",
+          "Microsoft.Web.LibraryManager.Build": "2.1.161",
           "Mono.Cecil": "0.11.4",
           "Serilog": "2.10.0",
           "Serilog.Extensions.Logging": "3.1.0",
           "Serilog.Extensions.Logging.File": "2.0.0",
           "Serilog.Sinks.Console": "4.0.1",
           "ShellProgressBar": "5.1.0",
-          "Stryker.DataCollector": "1.2.1",
-          "Stryker.RegexMutators": "1.2.1",
-          "System.IO.Abstractions": "16.0.3",
+          "Stryker.DataCollector": "1.2.2",
+          "Stryker.RegexMutators": "1.2.2",
+          "System.IO.Abstractions": "16.0.8",
           "System.Net.Http.Json": "6.0.0"
         }
       },
