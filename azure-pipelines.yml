@@ -218,6 +218,13 @@ stages:
         command: test
         projects: '**/Validation.csproj'
         arguments: --filter Traits=SingleTestProject
+    - task: DotNetCoreCLI@2
+      displayName: run Stryker package
+      inputs:
+        command: custom
+        custom: 'add'
+        arguments: 'package Stryker --version $(IntegrationTestVersion)'
+        workingDirectory: '$(Build.ArtifactStagingDirectory)/integrationtest/CustomRunner'
 
   - job: MacOsTests
     displayName: Run tests on Mac OS

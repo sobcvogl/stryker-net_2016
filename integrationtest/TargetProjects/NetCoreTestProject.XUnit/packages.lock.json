@@ -1,7 +1,7 @@
 {
   "version": 1,
   "dependencies": {
-    ".NETCoreApp,Version=v3.0": {
+    "net6.0": {
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
         "requested": "[17.1.0, )",
@@ -1097,7 +1097,7 @@
       "targetproject": {
         "type": "Project",
         "dependencies": {
-          "Library": "1.4.0"
+          "Library": "1.0.0"
         }
       }
     }
